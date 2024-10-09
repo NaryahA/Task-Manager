@@ -4,7 +4,7 @@ let nextId = JSON.parse(localStorage.getItem("nextId")) || 1;
 
 // Todo: create a function to generate a unique task id
 function generateTaskId() {
-    return nextID++;
+    return nextId++;
 }
 
 // Todo: create a function to create a task card
@@ -14,25 +14,46 @@ function createTaskCard(task) {
             <h3>${task.title}</h3>
             <p>${task.description}</p>
             <p>Due: ${task.dueDate}</p>
-            <button class="delete-btn">Delete</button>
         </div>
     `);
+
+    const deleteBtn = $(`
+        <button class="delete-btn">Delete</button>
+    `)
+
+    deleteBtn.on("click", handleDeleteTask)
+
+    card.append(deleteBtn)
+
+
     card.draggable({
-        revert: true
+        revert: true,
+        zIndex:100
     });
     return card;
 }
 
 // Todo: create a function to render the task list and make cards draggable
 function renderTaskList() {
-    $('#task-container').empty();
+    $('#todo-cards').empty();
+    $('#in-progress-cards').empty();
+    $('#done-cards').empty();
+    console.log(taskList) 
     taskList.forEach(task => {
         const taskCard = createTaskCard(task);
-        $('#task-container').append(taskCard);
+        if(task.status == "in-progress"){
+            $('#in-progress-cards').append(taskCard);
+        }
+        else if(task.status == "done"){
+            $('#done-cards').append(taskCard)
+        }
+        else{
+            $('#todo-cards').append(taskCard);
+        }
     });
 
     // Make lanes droppable
-    $('.status-lane').droppable({
+    $('.lane').droppable({
         accept: '.task-card',
         drop: handleDrop
     });
@@ -66,7 +87,8 @@ function handleAddTask(event){
 
 // Todo: create a function to handle deleting a task
 function handleDeleteTask(event){
-    const taskId = $(event.target).closest('.task-card').data('id');
+    const taskId = $(event.target).parent().data("id")
+    console.log(taskId)
     taskList = taskList.filter(task => task.id !== taskId);
     localStorage.setItem("tasks", JSON.stringify(taskList));
     renderTaskList();
@@ -75,8 +97,17 @@ function handleDeleteTask(event){
 // Todo: create a function to handle dropping a task into a new status lane
 function handleDrop(event, ui) {
     const taskId = ui.draggable.data('id');
-    const statusLane = $(event.target).data('status')
-
+    const statusLane = $(event.target).attr("id")
+    console.log(statusLane)
+    taskList.forEach(task => {
+        console.log(taskId)
+        console.log(task)
+       if (taskId==task.id){
+        task.status=statusLane
+       }
+    });
+console.log(taskList)
+localStorage.setItem("tasks", JSON.stringify(taskList));
     renderTaskList(); 
 }
 
@@ -84,7 +115,7 @@ function handleDrop(event, ui) {
 $(document).ready(function () {
     renderTaskList();
     
-    $('#add-task-form').on('submit', handleAddTask);
+    $('#add-task-form').on('click', handleAddTask);
     $('#task-container').on('click', '.delete-btn', handleDeleteTask);
     
     $('#task-due-date').datepicker();
